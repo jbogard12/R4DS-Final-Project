@@ -1,0 +1,93 @@
+---
+title: "Final Project - R4DS - BOGARD"
+author: "Bogard"
+date: "April 26, 2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F)
+
+library(tidyverse)
+library(readxl)
+library(stringr)
+library(gridExtra)
+library(scales)
+library(psych)
+library(knitr)
+library(lubridate)
+library(skimr)
+library(kableExtra)
+
+dir <- "C:/Users/jbogard/Google Drive/UCLA/Classes/17-18 Q3/17-18 Q3 - R4DS - Christensen/Final Project"
+setwd(dir)
+d <- read.csv("nyc_data_SAMPLE.csv")
+```
+
+```{r}
+#Creating a Subset of the Full Dataset to Work With
+# d <- read_csv("311_Service_Requests_from_2010_to_Present.csv")
+# dim(d)
+# 
+# dr <- d %>% sample_frac(.00015)
+# dim(dr)
+# 
+# write_csv(dr, "C:/Users/jbogard/Google Drive/UCLA/Classes/17-18 Q3/17-18 Q3 - R4DS - Christensen/Final Project/nyc_data_SAMPLE.csv")
+```
+
+Overview of the Data
+```{r}
+#skim(d) 
+
+d %>% filter(!Descriptor %in% c("N/A", "other")) %>% 
+    select(Agency.Name, Complaint.Type, Descriptor) %>% 
+    group_by(Agency.Name) %>% 
+    sample_n(2, replace=T) %>% 
+    kable() %>% 
+    kable_styling(full_width = F) %>% 
+    column_spec(1, width = "5em") %>% 
+    column_spec(2, width = "5em") %>% 
+    column_spec(3, width = "5em")
+```
+
+Missing Values
+```{r}
+a <- skim(d) %>% dplyr::filter(stat=="missing")
+a %>% filter(value>0) %>% arrange(-value) %>% 
+    select(variable, type, value) %>% kable(format.args = list(big.mark=","),
+                                            col.names = c("Variable", "Type", "n Missing")) %>% 
+     column_spec(1, width = "10em")
+```
+
+
+Unique Values
+```{r}
+b <- skim(d) %>% dplyr::filter(stat=="n_unique")
+b %>% filter(value>0) %>% arrange(-value) %>% 
+    select(variable, value) %>% kable(format.args = list(big.mark=","),
+                                      col.names = c("Variable", "n Unique")) %>% 
+     column_spec(1, width = "10em")
+
+n_unique(d$Unique.Key)==nrow(d)
+```
+
+Names
+```{r}
+#replace all "." with "_"
+#Location contains funny characters
+#Boulevard and Blvd (e.g. "College Point Blvd")
+```
+
+Dates to Clean
+```{r, results="hide"}
+d <- d %>% mutate(due_date=as_date(mdy_hms(`Due.Date`)))
+d <- d %>% mutate(closed_date=as_date(mdy_hms(`Closed.Date`)))
+d <- d %>% mutate(created_date=as_date(mdy_hms(`Created.Date`)))
+d <- d %>% mutate(res_action_updated_date=as_date(mdy_hms(`Resolution.Action.Updated.Date`)))
+
+d %>% select(created_date) %>% slice(1:5)
+
+#Some of the dates are totally wrong. 
+```
